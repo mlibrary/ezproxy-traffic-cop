@@ -1,0 +1,2 @@
+RewriteEngine on
+RewriteRule ^login$ proxy-login/login.php [L,QSA]

@@ -1,0 +1,5 @@
+#<IfModule mod_rewrite.c>
+ RewriteEngine on
+ RewriteCond %{THE_REQUEST} ^GET\ /api/[^/]*/([^/]*)/([^\ ]*)\ HTTP
+ RewriteRule ^[^/]*/.*$ query.php?format=%1&arg=%2 [L]
+#</IfModule>

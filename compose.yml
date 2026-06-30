@@ -1,0 +1,21 @@
+---
+services:
+  web:
+    build:
+      context: .
+    env_file:
+    - .env
+    volumes:
+    - ./src/html:/var/www/html
+    - ./src/lib:/var/www/lib
+    - ./config:/var/www/config
+    ports:
+    - "3000:80"
+
+  apache-exporter:
+    image: bitnami/apache-exporter:latest@sha256:706ec12528bad17ee1a41fb7c6e002b076f123392cdbac54651ae8f6f907bebb
+    command: [ "--scrape_uri=http://web:81/server-status?auto" ]
+    depends_on:
+      - web
+    profiles:
+      - monitoring
