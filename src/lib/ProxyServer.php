@@ -12,9 +12,10 @@ class ProxyServer {
   public $safe = null;
   public $proxied = null;
   public $domains = null;
+  public $basePath = null;
 
-  public function __construct($config) {
-    $this->path     = $config['path'];
+  public function __construct($config, $basePath = '.') {
+    $this->path     = mb_substr($config['path'], 0, 1) === '/' ? $config['path'] : $basePath . '/' . $config['path'];
     $this->server   = $config['server'];
     $this->hash     = $config['hash'];
     $this->secret   = $config['secret'];

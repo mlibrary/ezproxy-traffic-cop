@@ -4,11 +4,12 @@ class ProxyServerList {
   public $servers = null;
 
   public function __construct($ini) {
+    $basePath = dirname($ini);
     $this->config = parse_ini_file($ini, true);
     $this->servers = [];
 
     foreach ($this->config as $location => $config) {
-      $this->servers[] = new ProxyServer($config);
+      $this->servers[] = new ProxyServer($config, $basePath);
     }
   }
 
