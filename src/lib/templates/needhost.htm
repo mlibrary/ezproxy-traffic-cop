@@ -102,7 +102,7 @@
           The library's proxy server cannot connect you to this resource. There could be two reasons for this:
         </p>
         <ol>
-          <li>The University Library does not provide access to this resource. Try removing <em>"https://apps.lib.umich.edu/proxy-login/?url="</em> from the start of the web address / URL.</li>
+          <li>The University Library does not provide access to this resource. Try removing <em id="url">"https://apps.lib.umich.edu/proxy-login/?url="</em> from the start of the web address / URL.</li>
           <li>The University Library provides access to this resource, but we need to update the settings on the proxy server for it to work properly.</li>
         </ol>
         <hr>
@@ -114,5 +114,10 @@
         </p>
       </div>
     </main>
+    <script type=text/javascript">
+        // Get the URL from the query string and display it in the page
+        var url = new URL(window.location.href);
+        document.getElementById("url").textContent = '"' + url.protocol + "//" + url.host + url.pathname + '?url="';
+    </script>
   </body>
 </html>
