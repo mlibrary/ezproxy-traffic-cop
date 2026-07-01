@@ -2,7 +2,7 @@
 require_once(getenv("APP_HOME") . '/lib/setup.php');
 manage_cookies();
 
-$ip       = $_SERVER['REMOTE_ADDR'];
+$ip       = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
 
 if (isset($_GET['qurl'])) {
   $url    = rawurldecode($_GET['qurl']);
