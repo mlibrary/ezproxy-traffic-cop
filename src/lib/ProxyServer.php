@@ -13,6 +13,7 @@ class ProxyServer {
   public $proxied = null;
   public $domains = null;
   public $basePath = null;
+  private $rewrites = null;
 
   public function __construct($config, $basePath = '.') {
     $this->path     = mb_substr($config['path'], 0, 1) === '/' ? $config['path'] : $basePath . '/' . $config['path'];
@@ -24,12 +25,21 @@ class ProxyServer {
 
     $this->proxiedOnCampus = isset($config['proxiedOnCampus']) ? $config['proxiedOnCampus'] : [];
     $this->domainsOnCampus = isset($config['domainsOnCampus']) ? $config['domainsOnCampus'] : [];
+    $this->rewrites = [];
+    foreach ($config['rewrites'] ?? [] as $rewrite) {
+      $rule = explode(" => ", $rewrite);
+      $this->rewrites[$rule[0]] = $rule[1];
+    }
 
     $this->safe    = [];
     $this->proxied = [];
     $this->domains = [];
 
     $this->init();
+  }
+
+  public function rewrite($url) {
+    return $this->rewrites[$url];
   }
 
   private function parseRanges($ranges) {

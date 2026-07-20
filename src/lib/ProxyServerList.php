@@ -48,4 +48,12 @@ class ProxyServerList {
     return FALSE;
   }
 
+  public function rewrite($url) {
+    foreach ($this->servers as $server) {
+      if ($rewrite = $server->rewrite($url)) {
+        return $rewrite;
+      }
+    }
+    return $url;
+  }
 }

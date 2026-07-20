@@ -33,8 +33,9 @@ try {
 }
 catch (Exception $e) { }
 
-$client = new ProxyClient($ip, $url, $username);
 $servers = new ProxyServerList(getenv('SERVERS_INI'));
+$url = $servers->rewrite($url);
+$client = new ProxyClient($ip, $url, $username);
 
 if ($servers->unsafe($client)) {
   proxy_server_problem();
