@@ -13,7 +13,7 @@ services:
     - "3000:80"
 
   apache-exporter:
-    image: bitnami/apache-exporter:latest@sha256:706ec12528bad17ee1a41fb7c6e002b076f123392cdbac54651ae8f6f907bebb
+    image: bitnami/apache-exporter:latest@sha256:9f4309c873ac3ba31f9c05646908a82fe7a34165701e4907330af5e9ac0e793a
     command: [ "--scrape_uri=http://web:81/server-status?auto" ]
     depends_on:
       - web
