@@ -39,6 +39,15 @@ class ProxyServerList {
     return $this->any('directAccess', $client);
   }
 
+  public function anonymousAccess($client) {
+    foreach ($this->servers as $server) {
+      if ($link = $server->anonymousAccess($client)) {
+        return $link;
+      }
+    }
+    return FALSE;
+  }
+
   public function getAuthorizedLink($client) {
     foreach ($this->servers as $server) {
       if ($link = $server->getAuthorizedLink($client)) {
