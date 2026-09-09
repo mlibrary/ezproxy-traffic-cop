@@ -42,6 +42,11 @@ if ($servers->unsafe($client)) {
   exit(0);
 }
 
+if ($destination = $servers->anonymousAccess($client)) {
+  header('Location: ' . $destination);
+  exit(0);
+}
+
 if ($servers->directAccess($client)) {
   header('Location: ' . $url);
   exit(0);

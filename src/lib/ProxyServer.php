@@ -9,6 +9,7 @@ class ProxyServer {
   public $ipRanges = null;
   public $proxiedOnCampus = null;
   public $domainsOnCampus = null;
+  public $anonymous = null;
   public $safe = null;
   public $proxied = null;
   public $domains = null;
@@ -23,6 +24,7 @@ class ProxyServer {
     $this->roles    = $config['roles'];
     $this->ipRanges = $this->parseRanges($config['ip.ranges']);
 
+    $this->anonymous = [];
     $this->proxiedOnCampus = isset($config['proxiedOnCampus']) ? $config['proxiedOnCampus'] : [];
     $this->domainsOnCampus = isset($config['domainsOnCampus']) ? $config['domainsOnCampus'] : [];
     $this->rewrites = [];
@@ -82,6 +84,29 @@ class ProxyServer {
             $this->safe[] = strtolower($hostname);
           }
         }
+        elseif (preg_match('/^AnonymousURL -RE \+.*$/i', $line)) {
+          list($directive, $option, $regex) = explode(' ', $line, 3);
+          if (!empty($regex)) {
+            $this->anonymous[] = '~' . mb_substr($regex, 1, mb_strlen($regex)) . '~';
+          }
+        }
+      }
+    }
+  }
+
+  public function anonymousAccess($client) {
+    foreach ($this->anonymous as $regex) {
+      set_error_handler(static function (): bool {
+        return true; // suppress preg_match's warning
+      });
+
+      try {
+        $result = preg_match($regex, $client->url);
+      } finally {
+        restore_error_handler();
+      }
+      if ($result === 1) {
+        return $this->server . "/login?qurl=" . rawurlencode($client->url);
       }
     }
   }
