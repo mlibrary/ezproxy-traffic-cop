@@ -41,7 +41,10 @@ class ProxyServer {
   }
 
   public function rewrite($url) {
-    return $this->rewrites[$url];
+    if (isset($this->rewrites[$url])) {
+      return $this->rewrites[$url];
+    }
+    return null;
   }
 
   private function parseRanges($ranges) {
