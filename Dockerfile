@@ -2,7 +2,7 @@ FROM php:8.5-apache@sha256:609de4eac65a03f20975441c9c3f313811d785575f0d02413c630
 
 RUN apt-get update \
  && apt-get upgrade -y \
- && apt-get install -y libapache2-mod-auth-openidc libldap-dev \
+ && apt-get install -y libapache2-mod-auth-openidc libldap-dev gettext-base\
  && apt-get autoremove -y \
  && apt-get clean \
  && (apt-get distclean || rm -rf /var/cache/apt/archives /var/lib/apt/lists/*) \
@@ -11,9 +11,14 @@ RUN apt-get update \
  && a2enmod rewrite \
  && docker-php-ext-install ldap
 
+COPY apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY apache/auth_openidc.conf /etc/apache2/conf-available/auth_openidc.conf
 COPY apache/ports.conf /etc/apache2/ports.conf
 COPY apache/001-server-status.conf /etc/apache2/sites-enabled/001-server-status.conf
 
 COPY src/html /var/www/html
 COPY src/lib /var/www/lib
+
+COPY bin/docker-envsubst-entrypoint /usr/local/bin/docker-envsubst-entrypoint
+ENTRYPOINT ["docker-envsubst-entrypoint"]
+CMD ["apache2-foreground"]

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+mv /etc/apache2/sites-available/000-default.conf /tmp/000-default.conf
+envsubst '$DOCUMENT_ROOT' < /tmp/000-default.conf > /etc/apache2/sites-available/000-default.conf
+
+exec docker-php-entrypoint "$@"

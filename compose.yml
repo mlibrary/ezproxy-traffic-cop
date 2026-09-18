@@ -11,6 +11,22 @@ services:
     - ./config:/var/www/config
     ports:
     - "3000:80"
+    environment:
+    - DOCUMENT_ROOT=/var/www/html
+
+  receiver:
+    build:
+      context: .
+    env_file:
+    - .env
+    volumes:
+    - ./src/receiver:/var/www/receiver
+    - ./src/lib:/var/www/lib
+    - ./config:/var/www/config
+    environment:
+    - DOCUMENT_ROOT=/var/www/receiver
+    ports:
+    - "3001:80"
 
   apache-exporter:
     image: bitnami/apache-exporter:latest@sha256:9f4309c873ac3ba31f9c05646908a82fe7a34165701e4907330af5e9ac0e793a
