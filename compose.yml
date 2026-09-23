@@ -5,10 +5,20 @@ services:
       context: .
     env_file:
     - .env
-    volumes:
+    volumes: &VOLUMES
     - ./src/html:/var/www/html
+    - ./src/receiver:/var/www/receiver
     - ./src/lib:/var/www/lib
     - ./config:/var/www/config
+    - ./apache/000-default.conf.initial:/etc/apache2/sites-available/000-default.conf.initial
+    - ./apache/001-server-status.conf:/etc/apache2/sites-enabled/001-server-status.conf
+    - ./apache/auth_openidc.conf:/etc/apache2/conf-available/auth_openidc.conf
+    - ./apache/ports.conf:/etc/apache2/ports.conf
+    - ./apache/upload_filesize.ini:/usr/local/etc/php/conf.d/upload_filesize.ini
+    - ./bin/sender:/usr/local/bin/sender
+    - ./bin/docker-envsubst-entrypoint:/usr/local/bin/docker-envsubst-entrypoint
+    - ./bin/generate-transmission-keys:/usr/local/bin/generate-transmission-keys
+    - ./data:/data
     ports:
     - "3000:80"
     environment:
@@ -19,10 +29,7 @@ services:
       context: .
     env_file:
     - .env
-    volumes:
-    - ./src/receiver:/var/www/receiver
-    - ./src/lib:/var/www/lib
-    - ./config:/var/www/config
+    volumes: *VOLUMES
     environment:
     - DOCUMENT_ROOT=/var/www/receiver
     ports:

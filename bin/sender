@@ -1,0 +1,242 @@
+#!/usr/bin/env php
+<?php
+require_once(getenv("APP_HOME") . '/lib/transmission/setup.php');
+if (PHP_SAPI !== 'cli') {
+    fail('This uploader must be run from the command line.');
+}
+
+if (!extension_loaded('curl')) {
+    fail('The PHP curl extension is required.');
+}
+
+if (!extension_loaded('sodium')) {
+    fail('The PHP sodium extension is required.');
+}
+
+$options = getopt(
+    '',
+    [
+        'archive:',
+        'version:',
+        'url:',
+        'private-key:',
+        'bearer-token-file::',
+        'client-cert::',
+        'client-key::',
+        'client-key-password-file::',
+        'ca-file::',
+        'temp-dir::',
+    ]
+);
+
+foreach (['archive', 'version', 'url', 'private-key'] as $required) {
+    if (
+        !isset($options[$required]) ||
+        !is_string($options[$required]) ||
+        $options[$required] === ''
+    ) {
+        fail("Missing required option: --{$required}=...");
+    }
+}
+
+$manifestPath = null;
+$signaturePath = null;
+$privateKey = null;
+$bearerToken = null;
+$clientKeyPassword = null;
+
+try {
+    $archivePath = requireReadableFile(
+        $options['archive'],
+        'archive'
+    );
+    $version = validateVersion($options['version']);
+    $url = validateHttpsUrl($options['url']);
+
+    /*
+     * A token file is safer than a command-line token, which can appear in
+     * process listings. SYNC_BEARER_TOKEN is also supported for convenience.
+     */
+    if (
+        isset($options['bearer-token-file']) &&
+        is_string($options['bearer-token-file']) &&
+        $options['bearer-token-file'] !== ''
+    ) {
+        $tokenPath = requireReadableFile(
+            $options['bearer-token-file'],
+            'bearer-token file'
+        );
+        $token = file_get_contents($tokenPath);
+
+        if ($token === false) {
+            throw new UploadException(
+                'Could not read bearer-token file'
+            );
+        }
+
+        $bearerToken = trim($token);
+        sodium_memzero($token);
+    } else {
+        $environmentToken = getenv('SYNC_BEARER_TOKEN');
+
+        if (
+            is_string($environmentToken) &&
+            $environmentToken !== ''
+        ) {
+            $bearerToken = $environmentToken;
+        }
+    }
+
+    if (
+        isset($options['client-key-password-file']) &&
+        is_string($options['client-key-password-file']) &&
+        $options['client-key-password-file'] !== ''
+    ) {
+        $passwordPath = requireReadableFile(
+            $options['client-key-password-file'],
+            'client-key password file'
+        );
+        $password = file_get_contents($passwordPath);
+
+        if ($password === false) {
+            throw new UploadException(
+                'Could not read client-key password file'
+            );
+        }
+
+        $clientKeyPassword = rtrim($password, "\r\n");
+        sodium_memzero($password);
+    }
+
+    $privateKey = readSigningKey($options['private-key']);
+
+    $signed = createSignedManifest(
+        $archivePath,
+        $version,
+        $privateKey
+    );
+
+    /*
+     * Remove the private-key bytes from the PHP string as soon as signing
+     * has completed. This does not guarantee removal of every runtime copy,
+     * but it reduces unnecessary lifetime.
+     */
+    sodium_memzero($privateKey);
+    $privateKey = null;
+
+    $tempDirectory = isset($options['temp-dir']) &&
+        is_string($options['temp-dir']) &&
+        $options['temp-dir'] !== ''
+        ? $options['temp-dir']
+        : sys_get_temp_dir();
+
+    if (
+        !is_dir($tempDirectory) ||
+        !is_writable($tempDirectory)
+    ) {
+        throw new UploadException(
+            'Temporary directory is not writable'
+        );
+    }
+
+    $manifestPath = writeTemporaryFile(
+        $tempDirectory,
+        'sync-manifest-',
+        $signed['manifest_bytes']
+    );
+    $signaturePath = writeTemporaryFile(
+        $tempDirectory,
+        'sync-signature-',
+        $signed['signature']
+    );
+
+    $result = uploadRelease(
+        url: $url,
+        archivePath: $archivePath,
+        manifestPath: $manifestPath,
+        signaturePath: $signaturePath,
+        bearerToken: $bearerToken,
+        clientCert: isset($options['client-cert'])
+            && is_string($options['client-cert'])
+            && $options['client-cert'] !== ''
+                ? $options['client-cert']
+                : null,
+        clientKey: isset($options['client-key'])
+            && is_string($options['client-key'])
+            && $options['client-key'] !== ''
+                ? $options['client-key']
+                : null,
+        clientKeyPassword: $clientKeyPassword,
+        caFile: isset($options['ca-file'])
+            && is_string($options['ca-file'])
+            && $options['ca-file'] !== ''
+                ? $options['ca-file']
+                : null
+    );
+
+    if ($result['status'] < 200 || $result['status'] >= 300) {
+        $receiverMessage = '';
+
+        if (
+            is_array($result['json']) &&
+            isset($result['json']['error']) &&
+            is_string($result['json']['error'])
+        ) {
+            $receiverMessage = ': ' . $result['json']['error'];
+        } elseif ($result['body'] !== '') {
+            $receiverMessage = ': ' . trim($result['body']);
+        }
+
+        throw new UploadException(
+            "Receiver returned HTTP {$result['status']}" .
+            $receiverMessage
+        );
+    }
+
+    $output = [
+        'status' => 'uploaded',
+        'http_status' => $result['status'],
+        'version' => $signed['manifest']['version'],
+        'sha256' => $signed['manifest']['sha256'],
+        'size' => $signed['manifest']['size'],
+    ];
+
+    if (is_array($result['json'])) {
+        $output['receiver'] = $result['json'];
+    }
+    if (is_string($result['body']) && $result['body'] !== '') {
+        $output['receiver_body'] = trim($result['body']);
+    }
+
+    fwrite(
+        STDOUT,
+        json_encode(
+            $output,
+            JSON_THROW_ON_ERROR |
+            JSON_PRETTY_PRINT |
+            JSON_UNESCAPED_SLASHES
+        ) . PHP_EOL
+    );
+} catch (Throwable $error) {
+    fail($error->getMessage());
+} finally {
+    if (is_string($manifestPath)) {
+        @unlink($manifestPath);
+    }
+
+    if (is_string($signaturePath)) {
+        @unlink($signaturePath);
+    }
+
+    if (is_string($privateKey)) {
+        sodium_memzero($privateKey);
+    }
+
+    if (is_string($bearerToken)) {
+        sodium_memzero($bearerToken);
+    }
+
+    if (is_string($clientKeyPassword)) {
+        sodium_memzero($clientKeyPassword);
+    }
+}

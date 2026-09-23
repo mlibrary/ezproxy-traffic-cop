@@ -11,14 +11,19 @@ RUN apt-get update \
  && a2enmod rewrite \
  && docker-php-ext-install ldap
 
-COPY apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY apache/000-default.conf.initial /etc/apache2/sites-available/000-default.conf.initial
 COPY apache/auth_openidc.conf /etc/apache2/conf-available/auth_openidc.conf
 COPY apache/ports.conf /etc/apache2/ports.conf
 COPY apache/001-server-status.conf /etc/apache2/sites-enabled/001-server-status.conf
+COPY apache/upload_filesize.ini /usr/local/etc/php/conf.d/upload_filesize.ini
 
 COPY src/html /var/www/html
 COPY src/lib /var/www/lib
+COPY src/receiver /var/www/receiver
 
 COPY bin/docker-envsubst-entrypoint /usr/local/bin/docker-envsubst-entrypoint
+COPY bin/sender /usr/local/bin/sender
+COPY bin/generate-transmission-keys /usr/local/bin/generate-transmission-keys
+
 ENTRYPOINT ["docker-envsubst-entrypoint"]
 CMD ["apache2-foreground"]
