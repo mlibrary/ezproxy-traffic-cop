@@ -1,4 +1,4 @@
-FROM php:8.5-apache@sha256:609de4eac65a03f20975441c9c3f313811d785575f0d02413c630753ab5c5532 AS base
+FROM bertrama/php8.5.12-apache:latest@sha256:fe1df6ad1d5d9f7b8b66a1eb11d66de463fe38d4df2c13d3536b7d2fb37ac78e AS base
 
 RUN apt-get update \
  && apt-get upgrade -y \
