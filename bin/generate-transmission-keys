@@ -1,0 +1,6 @@
+#!/usr/bin/env php
+<?php
+
+require_once(getenv("APP_HOME") . '/lib/transmission/setup.php');
+
+generateKeyPair(PUBLIC_KEY_PATH, PRIVATE_KEY_PATH);
