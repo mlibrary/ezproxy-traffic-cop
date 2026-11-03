@@ -2,6 +2,20 @@
 declare(strict_types=1);
 require_once(getenv("APP_HOME") . '/lib/transmission/setup.php');
 
+try {
+  setup();
+}
+catch (Throwable $e) {
+  error_log('Failed to load deployment receiver: ' . $e->getMessage());
+  http_response_code(500);
+  header('Content-Type: application/json');
+  echo json_encode([
+    'status' => 'error',
+    'error' => 'Internal server error'
+  ]);
+  exit(1);
+}
+
 /*
  * Requirements:
  *   - PHP 8.2+

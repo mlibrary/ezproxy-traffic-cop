@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 require_once(getenv("APP_HOME") . '/lib/transmission/setup.php');
+setup();
+
 if (PHP_SAPI !== 'cli') {
     fail('This uploader must be run from the command line.');
 }
