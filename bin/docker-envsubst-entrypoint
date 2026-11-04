@@ -1,5 +1,23 @@
 #!/bin/sh
 
+# Run this in a subshell so that it doesn't interfere with the current shell's environment variables
+(
+  # Load Apache environment variables to get APACHE_RUN_USER and APACHE_RUN_GROUP
+  . /etc/apache2/envvars
+
+  # Find all mounted volumes that are using the ${VOLUME_DRIVER:-csi-cephfs}
+  #   and change their ownership to the Apache runtime user and group
+  VOLUME_MOUNTS=$(mount | grep ${VOLUME_DRIVER:-csi-cephfs} | awk '{print $3}')
+  DESIRED_OWNER="${APACHE_RUN_USER}:${APACHE_RUN_GROUP}"
+  for VOLUME_MOUNT in $VOLUME_MOUNTS ; do
+    CURRENT_OWNER=$(stat -c %U:%G "$VOLUME_MOUNT")
+    if [ ! -z "$CURRENT_OWNER" -a x"$CURRENT_OWNER" != x"$DESIRED_OWNER" ]; then
+      echo "Changing ownership of $VOLUME_MOUNT from $CURRENT_OWNER to $DESIRED_OWNER"
+      chown -R "$DESIRED_OWNER" "$VOLUME_MOUNT"
+    fi
+  done
+)
+
 envsubst '$DOCUMENT_ROOT' \
   < /etc/apache2/sites-available/000-default.conf.initial \
   > /etc/apache2/sites-available/000-default.conf

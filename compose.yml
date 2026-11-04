@@ -15,7 +15,7 @@ services:
     - ./apache/auth_openidc.conf:/etc/apache2/conf-available/auth_openidc.conf
     - ./apache/ports.conf:/etc/apache2/ports.conf
     - ./apache/upload_filesize.ini:/usr/local/etc/php/conf.d/upload_filesize.ini
-    - ./bin/sender:/usr/local/bin/sender
+    #- ./bin/sender:/usr/local/bin/sender
     - ./bin/docker-envsubst-entrypoint:/usr/local/bin/docker-envsubst-entrypoint
     - ./bin/generate-transmission-keys:/usr/local/bin/generate-transmission-keys
     - ./data:/data

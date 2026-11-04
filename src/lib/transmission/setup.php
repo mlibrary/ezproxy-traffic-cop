@@ -1,14 +1,33 @@
 <?php
-require_once(getenv("APP_HOME") . '/lib/transmission/generate.php');
-require_once(getenv("APP_HOME") . '/lib/transmission/receiver.php');
-require_once(getenv("APP_HOME") . '/lib/transmission/sender.php');
+require_once(__DIR__ . '/generate.php');
+require_once(__DIR__ . '/receiver.php');
+require_once(__DIR__ . '/sender.php');
 
 function setup() {
-  if (!file_exists(getenv("APP_HOME") . '/config/receiver.ini')) {
-    throw new Exception("Configuration file not found: " . getenv("APP_HOME") . '/config/receiver.ini');
+  if (file_exists(getenv("APP_HOME") . '/config/receiver.ini')) {
+    $config = parse_ini_file(getenv("APP_HOME") . '/config/receiver.ini', true);
   }
-
-  $config = parse_ini_file(getenv("APP_HOME") . '/config/receiver.ini', true);
+  elseif (file_exists(getenv("RECEIVER_INI"))) {
+    $config = parse_ini_file(getenv("RECEIVER_INI"), true);
+  }
+  else {
+    $config = [
+      'public_key_path' => '/dev/null',
+      'private_key_path' => '/dev/null',
+      'staging_root' => '/dev/null',
+      'release_root' => '/dev/null',
+      'lock_path' => '/dev/null',
+      'max_archive_size' => 100,
+      'max_file_size' => 25,
+      'max_expanded_size' => 250,
+      'max_files' => 10000,
+      'max_path_length' => 240,
+      'max_path_depth' => 20,
+      'connect_timeout_seconds' => 10,
+      'total_timeout_seconds' => 300,
+      'response_limit' => 1
+    ];
+  }
 
   if (!isset($config) || empty($config)) {
     throw new Exception("Configuration file is empty or invalid: " . getenv("APP_HOME") . '/config/receiver.ini');

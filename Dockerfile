@@ -20,9 +20,12 @@ COPY apache/upload_filesize.ini /usr/local/etc/php/conf.d/upload_filesize.ini
 COPY src/html /var/www/html
 COPY src/lib /var/www/lib
 COPY src/receiver /var/www/receiver
+RUN  php \
+      -d phar.readonly=0 \
+      ../lib/transmission/phar_builder.php \
+      /usr/local/bin/sender
 
 COPY bin/docker-envsubst-entrypoint /usr/local/bin/docker-envsubst-entrypoint
-COPY bin/sender /usr/local/bin/sender
 COPY bin/generate-transmission-keys /usr/local/bin/generate-transmission-keys
 
 ENTRYPOINT ["docker-envsubst-entrypoint"]

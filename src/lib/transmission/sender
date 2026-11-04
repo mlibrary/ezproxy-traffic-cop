@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-require_once(getenv("APP_HOME") . '/lib/transmission/setup.php');
+require_once(__DIR__ . '/setup.php');
 setup();
 
 if (PHP_SAPI !== 'cli') {
