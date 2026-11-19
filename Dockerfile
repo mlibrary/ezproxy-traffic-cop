@@ -1,4 +1,4 @@
-FROM php:8.5-apache@sha256:4cc63b3d4e05c40da73e7af5d39364ca2678ac07208919497bda3bbab975be95 AS base
+FROM php:8.5-apache@sha256:0110f2cd5f4d58417afc7340b22c4ddcce54e970b87c03a6c77259b07b47c325 AS base
 
 RUN apt-get update \
  && apt-get upgrade -y \
@@ -9,7 +9,8 @@ RUN apt-get update \
  && mkdir -p /var/cache/apache2/mod_auth_openidc/oidc-sessions /var/www/empty  /var/www/config \
  && chown www-data:www-data /var/cache/apache2/mod_auth_openidc/oidc-sessions \
  && a2enmod rewrite \
- && docker-php-ext-install ldap
+ && docker-php-ext-install ldap \
+ && echo "session.upload_progress.enabled = 0" > /usr/local/etc/php/conf.d/99-upload-progress.ini
 
 COPY apache/000-default.conf.initial /etc/apache2/sites-available/000-default.conf.initial
 COPY apache/auth_openidc.conf /etc/apache2/conf-available/auth_openidc.conf
